@@ -9,7 +9,9 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
         },
         resizable: false,
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+        frame: false,
+        titleBarStyle: 'hidden'
     })
 
     ipcMain.on('set-title', (event, title) => {
