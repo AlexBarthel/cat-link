@@ -1,5 +1,20 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 const path = require('node:path')
+
+async function handleFindClientProcess() {
+    const { err, stdout } = await exec('tasklist /fi "IMAGENAME eq RobloxPlayerBeta.exe"');
+    if (err) return null
+
+    try {
+        let lines = stdout.split('\n')
+        lines = lines[3].split(/\s+/)
+        return lines[1];
+    } catch (e) {
+        return null
+    }
+}
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -14,16 +29,12 @@ function createWindow() {
         titleBarStyle: 'hidden'
     })
 
-    ipcMain.on('set-title', (event, title) => {
-        const webContents = event.sender
-        const win = BrowserWindow.fromWebContents(webContents)
-        win.setTitle(title)
-    })
-
     mainWindow.loadFile('index.html')
 }
 
 app.whenReady().then(() => {
+    ipcMain.handle('find-client-process', handleFindClientProcess)
+
     createWindow()
 
     app.on('activate', function () {
