@@ -2,15 +2,22 @@ const { app, BrowserWindow, ipcMain } = require('electron/main')
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const path = require('node:path')
+const getMemoryAddressesWindows = require('./api')
 
 async function handleFindClientProcess() {
-    const { err, stdout } = await exec('tasklist /fi "IMAGENAME eq RobloxPlayerBeta.exe"');
+    // RobloxPlayerBeta.exe
+    const { err, stdout } = await exec('tasklist /fi "IMAGENAME eq notepad.exe"');
     if (err) return null
 
     try {
         let lines = stdout.split('\n')
         lines = lines[3].split(/\s+/)
-        return lines[1];
+
+        let pid = parseInt(lines[1])
+
+        let range = getMemoryAddressesWindows(pid)
+
+        return range[0] + " -> " + range[1]
     } catch (e) {
         return null
     }
