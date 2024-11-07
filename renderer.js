@@ -13,6 +13,7 @@ launchButton.addEventListener('click', (e) => {
 
 attachButton.addEventListener('click', async (e) => {
     const pid = await window.contextBridge.findClientProcess();
-
-    alert(pid)
+    if (pid == null)
+        alert("Could not find a running notepad.exe process")
+    else alert(pid)
 });
