@@ -20,16 +20,6 @@ const OpenProcess = kernel32.func('uintptr_t OpenProcess(uint32 dwDesiredAccess,
 const VirtualQueryEx = kernel32.func('size_t VirtualQueryEx(uintptr_t hProcess, uintptr_t lpAddress, uintptr_t lpBuffer, size_t dwLength)');
 const CloseHandle = kernel32.func('int CloseHandle(uintptr_t hObject)');
 
-const MEMORY_BASIC_INFORMATION = koffi.struct('MEMORY_BASIC_INFORMATION', {
-    BaseAddress: 'uintptr_t',
-    AllocationBase: 'uintptr_t',
-    AllocationProtect: 'uint32',
-    RegionSize: 'size_t',
-    State: 'uint32',
-    Protect: 'uint32',
-    Type: 'uint32'
-});
-
 async function getMemoryAddressesWindows(pid) {
     const hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, pid);
     if (!hProcess) {
@@ -40,18 +30,31 @@ async function getMemoryAddressesWindows(pid) {
     const memoryRanges = [];
     let address = 0n;
 
-    const mbiBufferSize = koffi.sizeof(MEMORY_BASIC_INFORMATION)
-    const mbiBuffer = koffi.alloc(MEMORY_BASIC_INFORMATION, mbiBufferSize)
-    const mbiPointer = koffi.decode(mbiBuffer, "uintptr_t")
+    const MEMORY_BASIC_INFORMATION = koffi.struct('MEMORY_BASIC_INFORMATION', {
+        BaseAddress: 'uintptr_t',
+        AllocationBase: 'uintptr_t',
+        AllocationProtect: 'uint32',
+        RegionSize: 'size_t',
+        State: 'uint32',
+        Protect: 'uint32',
+        Type: 'uint32'
+    })
+    const LMEMORY_BASIC_INFORMATION = koffi.sizeof(MEMORY_BASIC_INFORMATION)
+    const PMEMORY_BASIC_INFORMATION = koffi.decode(MEMORY_BASIC_INFORMATION, "uintptr_t")
 
     console.log(`hProcess (uintptr_t) = ${hProcess}`)
     console.log(`lpAddress (uintptr_t) = ${address}`)
-    console.log(`lpBuffer (uintptr_t) = ${mbiPointer}`)
-    console.log(`dwLength (size_t) = ${mbiBufferSize}`)
+    console.log(`lpBuffer (uintptr_t) = ${PMEMORY_BASIC_INFORMATION}`)
+    console.log(`dwLength (size_t) = ${LMEMORY_BASIC_INFORMATION}`)
 
-    while (VirtualQueryEx(hProcess, address, mbiPointer, mbiBufferSize) !== 0) {
-        const baseAddress = mbi.read('BaseAddress'); // Read fields directly from `mbi`
-        const regionSize = mbi.read('RegionSize');
+    while (VirtualQueryEx(hProcess, address, PMEMORY_BASIC_INFORMATION, LMEMORY_BASIC_INFORMATION) !== 0) {
+        console.log(MEMORY_BASIC_INFORMATION)
+
+        const baseAddress = MEMORY_BASIC_INFORMATION.BaseAddress;
+        const regionSize = MEMORY_BASIC_INFORMATION.RegionSize;
+
+        console.log(`baseAddress = ${baseAddress}`)
+        console.log(`regionSize = ${regionSize}`)
 
         memoryRanges.push({
             start: `0x${baseAddress.toString(16)}`,
